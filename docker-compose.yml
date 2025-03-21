@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=mysql+pymysql://temp:temp@db:3306/takehome
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=takehome
+      - MYSQL_USER=temp
+      - MYSQL_PASSWORD=temp
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

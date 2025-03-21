@@ -1,14 +1,11 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, UploadFile
 from fastapi.responses import HTMLResponse
-import ijson
-
-import ingestion
+from app import db, ingest
 
 app = FastAPI()
 
-
 @app.get("/", response_class=HTMLResponse)
-def index():
+async def index():
     return """
     <html>
         <head>
@@ -53,10 +50,7 @@ def index():
 
 
 @app.post("/upload/")
-async def ingest_product_json(file: UploadFile = File(...)):
-    try:
-        async for product in ingestion.products(file):
-            print(product.product_name)
-        return {"filename": file.filename}
-    except Exception as e:
-        return {"detail": str(e)}, 400
+async def ingest_product_json(file: UploadFile, session: db.SessionDep):
+    ingest.to_db(session, file)
+
+    return {"filename": file.filename}
