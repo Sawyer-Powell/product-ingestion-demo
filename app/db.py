@@ -2,8 +2,11 @@ from datetime import datetime
 import os
 from typing import Annotated
 from fastapi import Depends
-from sqlalchemy import create_engine
-from sqlmodel import Field, SQLModel, Session
+from sqlalchemy import Engine, create_engine
+from sqlmodel import Field, SQLModel, Session, inspect
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Product(SQLModel, table=True):
@@ -49,9 +52,17 @@ engine = create_engine(
 )
 
 
-def create_tables():
-    SQLModel.metadata.create_all(engine)
+def ensure_tables_exist(engine: Engine):
+    inspector = inspect(engine)
+    existing_tables = inspector.get_table_names()
 
+    model_tables = list(SQLModel.metadata.tables.keys())
+
+    if not any(table in existing_tables for table in model_tables):
+        SQLModel.metadata.create_all(engine)
+        logger.info("Creating tables in db according to schema")
+
+ensure_tables_exist(engine)
 
 def get_session():
     with Session(engine) as session:

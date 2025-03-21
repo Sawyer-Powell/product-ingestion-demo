@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
 from ijson import JSONError
-from app import db, ingest
 import logging
+from app import db, ingest
 
 logging.basicConfig(
     level=logging.INFO,
