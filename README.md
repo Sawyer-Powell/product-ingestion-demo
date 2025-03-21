@@ -27,10 +27,7 @@ Upon receiving the file:
 - Serializes the data to a postgres database
 
 If the system encounters an item with the same id already existing in the
-database, it overwrites it. Maintaining a history of changes across ids
-might be useful for data science teams and customers, but is likely tangential 
-to the goal of matching receipt data to arbitrary product data, and comes 
-with significant space and complexity tradeoffs.
+database, it overwrites it.
 
 At the moment, the system writes to its own postgres database, but could
 be easily modified through a change in the connection string to point
@@ -41,11 +38,9 @@ In the postgres database there are three tables
 - country
 - producttocountry
 
-The system offers facilities to easily group products by country of
-origin(s) to make downstream queries easier as the dataset grows.
-
-This serves as a proof of concept for how this system can adapt to
-encoding many-to-many relationships that appear in the datasest. The
+The system serializes a many to many relationship between products and countries. 
+This is a proof of concept to show how the system can adapt to
+encoding relationships that appear in the datasest. The
 "brand" column also demonstrates this many-to-many relationship with product.
 
 ## Extending the system
@@ -58,9 +53,8 @@ and scale.
     Authoritative Python representations of the tables in the database are
     available in `app/db.py`, which differ from the `Pydantic` representation
     of the openfoodfacts product data available in `app/ingest.py`. If the system
-    needs to support new datasets, that new dataset can be forced into compliance
-    with the database representation, or minor modifications can be made to the
-    db schema.
+    needs to support new datasets, that new dataset can be made compliant
+    with the database representation.
 
 2. Type safety
 
@@ -70,8 +64,8 @@ and scale.
     generation tools.
 
     When data teams and customers are provided with endpoints to
-    query data out of this service, the system's `OpenAPI` schema will always be
-    up to date with its internal data structures.
+    query data out of this service, the system's `OpenAPI` schema will always provide
+    up to date documentation on how to interface with the system.
 
 3. Internal ETL pipeline built around the generator pattern
 
@@ -84,9 +78,10 @@ and scale.
     the programmer a convenient method to adjust how raw data is getting
     normalized/cleaned and filtered before being sent to the db.
 
-    This pattern is well suited to expansion, offering convenient avenues
-    for adding features like data enrichment, or parallelization/pipelining 
-    over multiple cores/compute nodes.
+    This pattern is well suited to expansion, since it's a simple series of
+    functions product objects are passed through. This makes it easy to
+    add features like data enrichment, or parallelization/pipelining 
+    over multiple cores/compute nodes in the future.
 
 ## Notes on scale
 
@@ -96,18 +91,18 @@ has a size of ~17M.
 
 Assuming we get a new dataset each week, our worst case scenario is an increase
 of ~20M per week rounding up. Over the course of a year, this leads us to a db
-size of ~1GB. 1GB (worst case) increase per year is extremely manageable, 
+size of ~1GB. 1GB (worst case) increase per year is manageable, 
 and doesn't warrant serious consideration concerning sharding/distributing 
 the dataset.
 
 ### How this system can be scaled up to 100x+
 
-#### If we're still just getting weekly uploads, but those uploads are larger
+#### If we're still getting weekly uploads, but those uploads are larger
 
 1. Find data to archive. Our records have a "last_modified" time, using that metric
 we might be able to find a good amount of products that can be warehoused.
 2. We could also consider data fragmentation strategies. Postgres offers
-a number of data fragmentation tools, which would require some infra restructuring,
+a number of data fragmentation tools, which could require some infra restructuring,
 depending on if we're using a managed instance.
 
 #### If we are getting large uploads very frequently
