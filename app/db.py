@@ -47,7 +47,7 @@ connection_string = os.getenv("DATABASE_URL")
 if connection_string is None:
     raise Exception("Environment variable DATABASE_URL is not set!")
 
-connect_args = None
+connect_args = {}
 if 'sqlite' in connection_string:
     connect_args = {"check_same_thread": False}
 
