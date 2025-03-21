@@ -24,7 +24,7 @@ async def index():
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
         </head>
         <body style="padding: 4rem">
-            <form action="/upload/" enctype="multipart/form-data" method="post" id="uploadForm">
+            <form action="/upload" enctype="multipart/form-data" method="post" id="uploadForm">
                 <label>
                     Upload product file
                     <input type="file" name="file"/>
@@ -60,13 +60,14 @@ async def index():
     """
 
 
-@app.post("/upload/")
+@app.post("/upload")
 async def ingest_product_json(file: UploadFile, session: db.SessionDep):
+    total_added = 0
     try:
-        ingest.to_db(session, file)
+        total_added = ingest.to_db(session, file)
     except JSONError:
         err_msg = f"File had invalid JSON: {file.filename}"
         logger.error(err_msg)
         raise HTTPException(status_code=400, detail=err_msg)
 
-    return {"filename": file.filename}
+    return total_added

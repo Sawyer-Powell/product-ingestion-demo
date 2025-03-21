@@ -106,14 +106,14 @@ def parse_products(file_stream: BinaryIO):
             # Gracefully handle blank product name
             if "product_name" not in item:
                 logger.info(
-                    f"Product with code {item['code']} missing product_name, skipping"
+                    f"Product with code={item['code']} missing product_name, skipping"
                 )
                 continue
 
             # Gracefully handle no english country tags
             if "countries_en" not in item:
                 logger.info(
-                    f"Product with code {item['code']} missing countries_en, skipping"
+                    f"Product with code={item['code']} missing countries_en, skipping"
                 )
                 continue
 
@@ -187,12 +187,14 @@ def batch_upsert_products(
 DB_UPDATE_BATCH_SIZE = 512  # larger batch sizes might help on a high latency network
 
 
-def to_db(session: Session, file_stream: UploadFile):
+def to_db(session: Session, file_stream: UploadFile) -> int:
     """
     Uses a Product generator to batch updates to the database.
+    Returns how many products were added to the database
     """
     product_buffer: list[Product] = []
     country_set: set[str] = set()
+    i = 0
 
     for i, product in enumerate(parse_products(file_stream.file)):
         country_set.update(product.get_countries())
@@ -204,3 +206,4 @@ def to_db(session: Session, file_stream: UploadFile):
             country_set = set()
 
     batch_upsert_products(session, product_buffer, list(country_set))
+    return i

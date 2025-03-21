@@ -17,7 +17,7 @@ def test_upload_malformed_file():
             "text/plain",
         )
     }
-    response = client.post("/upload/", files=files)
+    response = client.post("/upload", files=files)
     assert response.status_code == 400
 
 
@@ -29,7 +29,7 @@ def test_upload_file():
             "text/plain",
         )
     }
-    response = client.post("/upload/", files=files)
+    response = client.post("/upload", files=files)
     assert response.status_code == 200
 
 
