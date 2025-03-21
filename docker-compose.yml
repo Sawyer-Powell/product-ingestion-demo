@@ -1,5 +1,4 @@
 version: '3'
-
 services:
   api:
     build: .
@@ -8,19 +7,16 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=mysql+pymysql://temp:temp@db:3306/takehome
-
+      - DATABASE_URL=postgresql://temp:temp@db:5432/takehome
   db:
-    image: mysql:8.0
+    image: postgres:15
     ports:
-      - "3306:3306"
+      - "5432:5432"
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_DATABASE=takehome
-      - MYSQL_USER=temp
-      - MYSQL_PASSWORD=temp
+      - POSTGRES_PASSWORD=temp
+      - POSTGRES_USER=temp
+      - POSTGRES_DB=takehome
     volumes:
-      - mysql_data:/var/lib/mysql
-
+      - postgres_data:/var/lib/postgresql/data
 volumes:
-  mysql_data:
+  postgres_data:
