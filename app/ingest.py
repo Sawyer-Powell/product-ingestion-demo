@@ -4,7 +4,6 @@ from typing import BinaryIO
 from fastapi import UploadFile
 import ijson
 from pydantic import BaseModel, Field, ValidationError
-from sqlalchemy import CompoundSelect
 from sqlmodel import Session, col, select, text
 from app import db
 
@@ -137,7 +136,6 @@ def fast_pg_batch_upsert_prelude(session: Session):
 
 def fast_pg_batch_upsert_postlude(session: Session):
     non_pk_product_cols = [f for f in db.Product.model_fields]
-    print(non_pk_product_cols)
     non_pk_product_cols.remove("id")
 
     product_update_clause = ", ".join([
@@ -150,7 +148,6 @@ def fast_pg_batch_upsert_postlude(session: Session):
         SELECT * FROM temp_product
         ON CONFLICT (id)
         DO UPDATE SET {product_update_clause};
-
         """)
     )
 
@@ -165,8 +162,8 @@ def fast_pg_batch_upsert_postlude(session: Session):
 
     session.commit()
 
-    session.execute(text(f"DROP TABLE IF EXISTS temp_product"))
-    session.execute(text(f"DROP TABLE IF EXISTS temp_producttocountry"))
+    session.execute(text("DROP TABLE IF EXISTS temp_product"))
+    session.execute(text("DROP TABLE IF EXISTS temp_producttocountry"))
 
     session.commit()
 

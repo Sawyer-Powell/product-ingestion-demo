@@ -76,7 +76,7 @@ and scale.
     This system makes used of the `ijson` library to iteratively parse
     uploaded files as chunks are received over the network. In `app/ingest.py`,
     `parse_products` produces a generator that can be iterated through by
-    `to_db`.
+    the db serialization functions.
 
     The `parse_products` function calls `transform_product`, which offers
     the programmer a convenient method to adjust how raw data is getting
