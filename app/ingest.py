@@ -130,14 +130,17 @@ def batch_upsert_products(
     session: Session, products: list[Product], countries: list[str]
 ):
     product_codes = [p.code for p in products]
-    product_existence = {
+
+    # Maintain maps to reduce db lookups for determing update vs. insert
+
+    product_existence_map = {
         p.id: p
         for p in session.exec(
             select(db.Product).where(col(db.Product.id).in_(product_codes))
         ).all()
     }
 
-    country_existence = {
+    country_existence_map = {
         c.name: c
         for c in session.exec(
             select(db.Country).where(col(db.Country.name).in_(countries))
@@ -149,24 +152,23 @@ def batch_upsert_products(
         db_product = product.to_db_type()
 
         # Upsert into the product table
-        if db_product.id in product_existence:
-            existing_db_product = product_existence[db_product.id]
+        if db_product.id in product_existence_map:
+            existing_db_product = product_existence_map[db_product.id]
             for k, v in db_product:
                 setattr(existing_db_product, k, v)
             db_product = existing_db_product
         else:
             session.add(db_product)
 
-        # Upsert into the country table
         # Link country to product if relationship doesn't exist
         for country in p_countries:
             db_country = db.Country(name=country)
 
-            if country in country_existence:
-                db_country = country_existence[country]
+            if country in country_existence_map:
+                db_country = country_existence_map[country]
             else:
                 session.add(db_country)
-                country_existence[country] = db_country
+                country_existence_map[country] = db_country
 
             stmt = select(db.ProductToCountry).filter_by(
                 country_id=db_country.id, product_id=db_product.id
@@ -182,7 +184,7 @@ def batch_upsert_products(
     session.commit()
 
 
-DB_UPDATE_BATCH_SIZE = 512
+DB_UPDATE_BATCH_SIZE = 512  # larger batch sizes might help on a high latency network
 
 
 def to_db(session: Session, file_stream: UploadFile):

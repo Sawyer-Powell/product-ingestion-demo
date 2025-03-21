@@ -44,7 +44,9 @@ connection_string = os.getenv("DATABASE_URL")
 if connection_string is None:
     raise Exception("Environment variable DATABASE_URL is not set!")
 
-engine = create_engine(connection_string, echo=False)
+engine = create_engine(
+    connection_string, echo=False, connect_args={"check_same_thread": False}
+)
 
 
 def create_tables():
