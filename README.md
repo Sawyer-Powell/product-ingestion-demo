@@ -45,10 +45,7 @@ In the postgres database there are three tables
 - country
 - producttocountry
 
-The system serializes a many to many relationship between products and countries. 
-This is a proof of concept to show how the system can adapt to
-encoding relationships that appear in the datasest. The
-"brand" column also demonstrates this many-to-many relationship with product.
+The system serializes a many to many relationship between products and countries.
 
 ## Extending the system
 
