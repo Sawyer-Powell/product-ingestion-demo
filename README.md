@@ -10,12 +10,20 @@ docker-compose up
 ```
 http://127.0.0.1:8000
 ```
-
 ## Running tests
 ```
 uv sync
 uv run pytest
 ```
+## Key technology
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) - python package manager, extremely fast, great interfaces to work with virtual environments
+- [fastapi](https://fastapi.tiangolo.com) - straightforward, performant python web framework for building server apps
+- [sqlmodel](https://sqlmodel.tiangolo.com) - python SQL ORM designed by the creators of fastapi, built on SQLAlchemy
+- [pytest](https://docs.pytest.org/en/stable/) - python testing framework, scans for files starting with `test_` in `./app` folder
+- [ijson](https://github.com/ICRAR/ijson) - allows for reading JSON as an iterator out of file streams, to save memory on large file ingestions
+- [pydantic](https://docs.pydantic.dev/latest/) - library for runtime type checking in python, used to validate and parse incoming JSON
+
 ## Exploring the database
 
 By default, the database is available to localhost through this connection string:
@@ -90,8 +98,7 @@ and scale.
 ## Notes on scale
 
 The provided dataset weighs in at ~113M on disk. After being processed
-by the system a `sqlite` database containing nearly the same amount of items
-has a size of ~17M.
+by the system a `sqlite` database over those items has a size of ~17M.
 
 Assuming we get a new dataset each week, our worst case scenario is an increase
 of ~20M per week rounding up. Over the course of a year, this leads us to a db
