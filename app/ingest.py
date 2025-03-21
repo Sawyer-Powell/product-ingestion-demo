@@ -1,10 +1,12 @@
 from datetime import datetime
+from syslog import LOG_INFO
 from typing import BinaryIO
 from fastapi import UploadFile
 import ijson
 from pydantic import BaseModel, Field
 from sqlmodel import Session, col, select
 from app import db
+from app.logging import logger
 
 
 class Product(BaseModel):
@@ -31,40 +33,60 @@ class Product(BaseModel):
 
     def to_db_type(self):
         return db.Product(
-            code = self.code,
-            url = self.url,
-            created_datetime = self.created_datetime,
-            last_modified_datetime = self.last_modified_datetime,
-            product_name = self.product_name,
-            brands = self.brands,
-            brands_tags = self.brands_tags,
-            countries = self.countries,
-            countries_en = self.countries_en,
-            completeness = self.completeness,
-            image_nutrition_url = self.image_nutrition_url,
-            image_nutrition_small_url = self.image_nutrition_small_url,
-            energy_kcal_100g = self.energy_kcal_100g,
-            energy_100g = self.energy_100g,
-            fat_100g = self.fat_100g,
-            saturated_fat_100g = self.saturated_fat_100g,
-            carbohydrates_100g = self.carbohydrates_100g,
-            sugars_100g = self.sugars_100g,
-            fiber_100g = self.fiber_100g,
-            proteins_100g = self.proteins_100g,
+            code=self.code,
+            url=self.url,
+            created_datetime=self.created_datetime,
+            last_modified_datetime=self.last_modified_datetime,
+            product_name=self.product_name,
+            brands=self.brands,
+            brands_tags=self.brands_tags,
+            countries=self.countries,
+            countries_en=self.countries_en,
+            completeness=self.completeness,
+            image_nutrition_url=self.image_nutrition_url,
+            image_nutrition_small_url=self.image_nutrition_small_url,
+            energy_kcal_100g=self.energy_kcal_100g,
+            energy_100g=self.energy_100g,
+            fat_100g=self.fat_100g,
+            saturated_fat_100g=self.saturated_fat_100g,
+            carbohydrates_100g=self.carbohydrates_100g,
+            sugars_100g=self.sugars_100g,
+            fiber_100g=self.fiber_100g,
+            proteins_100g=self.proteins_100g,
         )
 
 
-def from_json(file_stream: BinaryIO):
+def transform_product(product: Product) -> Product | None:
+    """
+    Collection of cleanup actions done on product objects.
+    Products can be filtered out from pipeline by returning None
+    """
+    # Filter out products with blank names
+    if product.product_name is None:
+        logger.log(LOG_INFO, f"Product with code={product.code} omitted, no name")
+        return None
+
+    # Make all names lowercase and stripped
+    product.product_name = product.product_name.lower().strip()
+
+
+def parse_products(file_stream: BinaryIO):
     """
     Generates Product objects from a file stream
     """
-    for item in ijson.items(file_stream, 'item'):
-        yield Product(**item)
+    for item in ijson.items(file_stream, "item"):
+        product = Product(**item)
+        product = transform_product(product)
+        if product is None:
+            continue
+        yield product
+
 
 def batch_upsert_products(session: Session, products: list[db.Product]):
     product_codes = [p.code for p in products]
     product_existence = {
-        p.code: p for p in session.exec(
+        p.code: p
+        for p in session.exec(
             select(db.Product).where(col(db.Product.code).in_(product_codes))
         ).all()
     }
@@ -80,16 +102,18 @@ def batch_upsert_products(session: Session, products: list[db.Product]):
     session.commit()
 
 
-DB_UPDATE_BATCH_SIZE = 64 # we update the database 64 products at a time from our data stream
+DB_UPDATE_BATCH_SIZE = 64
+
+
 def to_db(session: Session, file_stream: UploadFile, max: int | None = None):
     """
     Uses a Product generator to batch updates to the database.
-    An optional field, max, is provided for debugging purposes on large files
+    An optional field, max, is provided for debugging purposes
     """
     product_buffer: list[db.Product] = []
 
     if max is None:
-        for i, product in enumerate(from_json(file_stream.file)):
+        for i, product in enumerate(parse_products(file_stream.file)):
             db_product = product.to_db_type()
             product_buffer.append(db_product)
 
@@ -100,7 +124,7 @@ def to_db(session: Session, file_stream: UploadFile, max: int | None = None):
         batch_upsert_products(session, product_buffer)
 
     else:
-        for i, product in enumerate(from_json(file_stream.file)):
+        for i, product in enumerate(parse_products(file_stream.file)):
             db_product = product.to_db_type()
             product_buffer.append(db_product)
 

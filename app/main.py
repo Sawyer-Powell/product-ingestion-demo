@@ -1,6 +1,8 @@
-from fastapi import FastAPI, UploadFile
+from syslog import LOG_ERR
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
-from app import db, ingest
+from ijson import JSONError
+from app import db, ingest, logging
 
 app = FastAPI()
 
@@ -51,6 +53,12 @@ async def index():
 
 @app.post("/upload/")
 async def ingest_product_json(file: UploadFile, session: db.SessionDep):
-    ingest.to_db(session, file)
+    try:
+        ingest.to_db(session, file)
+    except JSONError:
+        err_msg = f"File had invalid JSON: {file.filename}"
+        logging.logger.log(LOG_ERR, err_msg)
+        raise HTTPException(status_code=400, detail=err_msg)
+
 
     return {"filename": file.filename}
