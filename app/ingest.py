@@ -283,8 +283,7 @@ DB_UPDATE_BATCH_SIZE = 1024  # larger batch sizes might help on a high latency n
 
 def to_psql_db(session: Session, file_stream: UploadFile) -> int:
     """
-    Uses a Product generator to batch updates to the database.
-    Returns how many products were added to the database
+    Postgres optimized version of to_db
     """
     product_buffer: list[Product] = []
     countries = get_countries(session)  # maintain an in memory unique list of countries
@@ -305,4 +304,26 @@ def to_psql_db(session: Session, file_stream: UploadFile) -> int:
 
     fast_pg_batch_upsert_postlude(session)
 
+    return i
+
+
+def to_db(session: Session, file_stream: UploadFile) -> int:
+    """
+    Generic method to serialize openfoodproucts JSON into a
+    SQL database.
+    """
+    product_buffer: list[Product] = []
+    country_set: set[str] = set()
+    i = 0
+
+    for i, product in enumerate(parse_products(file_stream.file)):
+        country_set.update(product.get_countries())
+        product_buffer.append(product)
+
+        if i % DB_UPDATE_BATCH_SIZE == 0:
+            batch_upsert_products(session, product_buffer, list(country_set))
+            product_buffer = []
+            country_set = set()
+
+    batch_upsert_products(session, product_buffer, list(country_set))
     return i

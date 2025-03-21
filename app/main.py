@@ -64,7 +64,10 @@ async def index():
 async def ingest_product_json(file: UploadFile, session: db.SessionDep):
     total_added = 0
     try:
-        total_added = ingest.to_db(session, file)
+        if db.ispsql():
+            total_added = ingest.to_psql_db(session, file)
+        else:
+            total_added = ingest.to_db(session, file)
     except JSONError:
         err_msg = f"File had invalid JSON: {file.filename}"
         logger.error(err_msg)
