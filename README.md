@@ -16,6 +16,13 @@ http://127.0.0.1:8000
 uv sync
 uv run pytest
 ```
+## Exploring the database
+
+By default, the database is available to localhost through this connection string:
+```
+postgresql://temp:temp@127.0.0.1:5432/takehome
+```
+
 # Design Notes
 
 This service provides one endpoint, `/upload`, which accepts a file upload. 

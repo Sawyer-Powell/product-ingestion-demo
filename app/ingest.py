@@ -215,6 +215,8 @@ def fast_pg_batch_upsert(
     cursor.copy_from(product_buffer, "temp_product")
     cursor.copy_from(product_to_country_buffer, "temp_producttocountry")
 
+    session.commit()
+
 
 def get_countries(session: Session) -> list[str]:
     return [c.name for c in session.exec(select(db.Country)).all()]

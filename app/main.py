@@ -46,7 +46,7 @@ async def index():
                         });
                         const result = await response.json();
                         if (response.ok) {
-                            messageDiv.innerHTML = `<p>Successfully uploaded ${result.filename}!</p>`;
+                            messageDiv.innerHTML = `<p>Upload successful!</p>`;
                         } else {
                             messageDiv.innerHTML = `<p>Error: ${result.detail || 'Upload failed'}</p>`;
                         }
