@@ -110,7 +110,7 @@ we might be able to find a good amount of products that can be warehoused.
 a number of data fragmentation tools, which would require some infra restructuring,
 depending on if we're using a managed instance.
 
-### If we are getting large uploads very frequently
+#### If we are getting large uploads very frequently
 
 We need to optimize system latency. Currently, we're bottlenecked by the speed
 we can do database operations. There's a couple of strategies here:
